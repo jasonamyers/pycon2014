@@ -125,52 +125,145 @@ engine = create_engine('sqlite:///:memory:', echo=True)
         </section>
         <section>
           <h2>Defining a Table</h2>
-          <p>pip install sqlalchemy</p>
           <pre><code data-trim class="language-python">
-from sqlalchemy import Table, Column, Integer, String, MetaData
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 metadata = MetaData()
-doctors = Table('doctors', metadata,
+actors = Table('actors', metadata,
     Column('id', Integer, primary_key=True),
     Column('name', String),
     Column('fullname', String),
 )
-patients = Table('patients', metadata,
+roles = Table('roles', metadata,
     Column('id', Integer, primary_key=True),
-    Column('doctor_id', None, ForeignKey('users.id')),
-    Column('email_address', String, nullable=False)
-    Column('phone_number', String, nullable=False)
+    Column('actor_id', None, ForeignKey('actors.id')),
+    Column('character_name', String, nullable=False)
 )
           </code></pre>
           <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
         </section>
         <section>
+          <h2>Create the tables</h2>
+          <pre><code data-trim class="language-python">
+metadata.create_all(engine)
+          </code></pre>
+          <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+        </section>
+        <section>
+          <h2>Open a connection</h2>
+          <pre><code data-trim class="language-python">
+conn = engine.connect()
+          </code></pre>
+          <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+        </section>
+        <section>
           <section>
-            <h2>Selecting</h2>
+            <h2>Single Insert</h2>
             <pre><code data-trim class="language-python">
+ins = actors.insert().values(name='Graham', fullname='Graham Chapman')
+result = conn.execute(ins)
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
           <section>
-            <h2>Insert and Update</h2>
+            <h2>Multiple Insert</h2>
             <pre><code data-trim class="language-python">
+conn.execute(roles.insert(), [
+    {'actor_id': 1, 'character_name' : 'King Arthur'},
+    {'actor_id': 1, 'character_name' : 'Voice of God'},
+    {'actor_id': 2, 'character_name' : 'Sir Lancelot'},
+    {'actor_id': 2, 'character_name' : 'Black Knight'},
+    {'actor_id': 3, 'character_name' : 'Patsy'},
+    {'actor_id': 3, 'character_name' : 'Sir Bors'},
+])
+            </code></pre>
+            <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+          </section>
+          <section>
+            <h2>Selecting</h2>
+            <pre><code data-trim class="language-python">
+from sqlalchemy.sql import select
+s = select([actors])
+result = conn.execute(s)
+for row in result:
+    print row
+
+(1, u'Graham', u'Graham Chapman')
+(2, u'John', u'John Cleese')
+(3, u'Terry', u'Terry Gilliam')
+            </code></pre>
+            <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+          </section>
+          <section>
+            <h2>Selecting</h2>
+            <pre><code data-trim class="language-python">
+s = select([actors.c.name, actors.c.fullname])
+result = conn.execute(s)
+for row in result:
+    print row
+
+(u'Graham', u'Graham Chapman')
+(u'John', u'John Cleese')
+(u'Terry', u'Terry Gilliam')
+            </code></pre>
+            <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+          </section>
+          <section>
+            <h2>Update</h2>
+            <pre><code data-trim class="language-python">
+stmt = actors.update().\
+    where(actors.c.name == 'Graham').\
+    values(name='Gram')
+
+conn.execute(stmt)
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
           <section>
             <h2>Delete</h2>
             <pre><code data-trim class="language-python">
+result = conn.execute(actors.delete().where(actors.c.name == 'Terry'))
+result.rowcount
+
+1
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
           <section>
-            <h2>Grouping and Ordering</h2>
+            <h2>Ordering</h2>
             <pre><code data-trim class="language-python">
+stmt = select([actors.c.name]).order_by(actors.c.name.desc())
+conn.execute(stmt).fetchall()
+
+[(u'Terry',), (u'John',), (u'Graham',)]
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
           <section>
-            <h2>Filtering and Limiting</h2>
+            <h2>Filtering</h2>
             <pre><code data-trim class="language-python">
+from sqlalchemy.sql import and_, or_, not_
+stmt = select([actors.c.name, roles.c.character_name]).\
+    where(
+        and_(
+          actors.c.name.like('Gra%'),
+          roles.c.character_name.like('Vo%')
+        )
+    )
+conn.execute(stmt).fetchall()
+
+[(u'Graham', u'Voice of God')]
+            </code></pre>
+            <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+          </section>
+          <section>
+            <h2>Limiting</h2>
+            <pre><code data-trim class="language-python">
+stmt = select([actors.c.name, roles.c.character_name]).\
+    select_from(actors.join(roles)).\
+    limit(1).offset(1)
+conn.execute(stmt).fetchall()
+
+[(u'Graham', u'Voice of God')]
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
@@ -189,10 +282,32 @@ patients = Table('patients', metadata,
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
         </section>
+          <section>
+            <h2>Grouping</h2>
+            <pre><code data-trim class="language-python">
+stmt = select([actors.c.name, func.count(roles.c.id)]).\
+    select_from(actors.join(roles)).\
+    group_by(actors.c.name)
+conn.execute(stmt).fetchall()
+
+[(u'Graham', 2), (u'John', 2), (u'Terry', 2)]
+            </code></pre>
+            <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
+          </section>
         <section>
           <section>
             <h2>Joins</h2>
             <pre><code data-trim class="language-python">
+s = select([actors, roles]).where(actors.c.id == roles.c.actor_id)
+for row in conn.execute(s):
+    print row
+
+(1, u'Graham', u'Graham Chapman', 1, 1, u'King Arthur')
+(1, u'Graham', u'Graham Chapman', 2, 1, u'Voice of God')
+(2, u'John', u'John Cleese', 3, 2, u'Sir Lancelot')
+(2, u'John', u'John Cleese', 4, 2, u'Black Knight')
+(3, u'Terry', u'Terry Gilliam', 5, 3, u'Patsy')
+(3, u'Terry', u'Terry Gilliam', 6, 3, u'Sir Bors')
             </code></pre>
             <aside class="notes">In many cases you’ll just pip install SQLAlchemy. but if you’re using flask I recommend using the variant just for it and pyramid has a scaffold for SQLAlchemy as well</aside>
           </section>
@@ -276,6 +391,15 @@ def build_table(engine, table_name):
     return Table(table_name, metadata, autoload=True, autoload_with=engine)
           </code></pre>
           <aside class="notes">This introspection makes a table from a given engine and metadata collection.</aside>
+        </section>
+        <section>
+          <pre><code>
+build_table('census')
+unavailable_fields = [
+    c.name for c in t.c if isinstance(c.type, NullType)
+]
+          </code></pre>
+          <aside class="notes">Once you build the table, it’s important to check for fields that have a null type as they can have an unexpected affect on code. NullType fields are found because a column type doesn’t match a SQLAlchemy column type in the dialect being used.</aside>
         </section>
         <section>
           <section>
