@@ -419,24 +419,12 @@ credentials 'aws_access_key_id=ACCESS_KEY;
           </section>
         </section>
         <section>
-          <section>
-            <h2>Dynamic Table Introspection</h2>
-            <pre><code data-trim class="language-python">
+          <h2>Dynamic Table Introspection</h2>
+          <pre><code data-trim class="language-python">
 def build_table(engine, table_name):
     return Table(table_name, metadata, autoload=True, autoload_with=engine)
-            </code></pre>
-            <aside class="notes">This introspection makes a table from a given engine and metadata collection.</aside>
-          </section>
-          <section>
-            <h2>Checking for Null Columns</h2>
-            <pre><code data-trim class="language-python">
-build_table(engine, 'census')
-unavailable_fields = [
-    c.name for c in t.c if isinstance(c.type, NullType)
-]
-            </code></pre>
-            <aside class="notes">Once you build the table, it’s important to check for fields that have a null type as they can have an unexpected affect on code. NullType fields are found because a column type doesn’t match a SQLAlchemy column type in the dialect being used.</aside>
-          </section>
+          </code></pre>
+          <aside class="notes">This introspection makes a table from a given engine and metadata collection.</aside>
         </section>
         <section>
           <section>
