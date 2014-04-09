@@ -181,7 +181,8 @@ conn = engine.connect()
           <section>
             <h2>Single Insert</h2>
             <pre><code data-trim class="language-python">
-ins = actors.insert().values(name='Graham', fullname='Graham Chapman', body_count=3)
+ins = actors.insert().\
+    values(name='Graham', fullname='Graham Chapman', body_count=3)
 result = conn.execute(ins)
 result.inserted_primary_key
 
