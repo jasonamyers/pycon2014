@@ -1,3 +1,5 @@
+Slideshow available on [My Blog](http://www.jasonamyers.com/pycon2014/#/)
+
 You can view a PDF version of the slides at
 [SlideShare](http://www.slideshare.net/jamdatadude/sql-alchemy-core-an-introduction).
 
